@@ -11,27 +11,52 @@ import org.robolectric.annotation.Config;
 
 import static org.junit.Assert.assertEquals;
 
-@RunWith(ParameterizedRobolectricTestRunner.class)
-@Config(constants = BuildConfig.class, sdk = 23)
+@RunWith(ParameterizedRobolectricTestRunner.class) @Config(constants = BuildConfig.class, sdk = 23)
 public class OpenWeatherApiRequestUrlsTest {
 
-  private final String mExpectedUrl;
-  private final OpenWeatherApiRequestParameters mOpenWeatherApiRequestParameters;
+  /*
+   * Parameters for each test case
+   */
   private String mApiKey;
-  private OpenWeatherApiRequest mOpenWeatherApiRequest;
+  private final OpenWeatherApiRequestParameters mOpenWeatherApiRequestParameters;
+
+  /*
+   * Unit Under Test
+   */
+  private OpenWeatherApiRequest uut;
+
+  /*
+   * Temp variables to hold the results to compare in each test case
+   */
+  private final String mExpectedUrl;
   private String mUrl;
 
+  /**
+   * Initializes Unit Under Test
+   */
   @Before public void createApiRequestBaseObject() {
     mApiKey = "someApiKey";
-    mOpenWeatherApiRequest = new OpenWeatherApiRequest(mApiKey);
+    uut = new OpenWeatherApiRequest(mApiKey);
   }
 
+  /**
+   * Setting up the expectations, this constructor is going to be called by
+   * the Custom Runner for Parameterized Tests
+   *
+   * @param expectedUrl  Value of the URL to assert
+   * @param openWeatherApiRequestParameters Helper object to retrieve an url
+   */
   public OpenWeatherApiRequestUrlsTest(String expectedUrl,
       OpenWeatherApiRequestParameters openWeatherApiRequestParameters) {
     mExpectedUrl = expectedUrl;
     mOpenWeatherApiRequestParameters = openWeatherApiRequestParameters;
   }
 
+  /**
+   * Prepares the parameters for the different test cases
+   *
+   * @return Collection with the parameters for each test case
+   */
   @ParameterizedRobolectricTestRunner.Parameters public static Collection data() {
 
     return Arrays.asList(new Object[][] {
@@ -51,6 +76,35 @@ public class OpenWeatherApiRequestUrlsTest {
     });
   }
 
+  @Test public void testCurrentUri() {
+    // arrange
+    givenRequestParameters(mOpenWeatherApiRequestParameters);
+    // act
+    whenGettingWeatherUrl();
+    // assert
+    thenUrlShouldBeExpected();
+  }
+
+  /*
+   * Pattern that I like to use to express the test cases on a Unit Test
+   * without having to add a BDD library.
+   */
+  private void thenUrlShouldBeExpected() {
+    assertEquals(mExpectedUrl, mUrl);
+  }
+
+  private void whenGettingWeatherUrl() {
+    mUrl = uut.url();
+  }
+
+  private void givenRequestParameters(
+      OpenWeatherApiRequestParameters mOpenWeatherApiRequestParameters) {
+    uut.addRequestParameters(mOpenWeatherApiRequestParameters);
+  }
+
+  /*
+   * Helper methods for each test case
+   */
   private static OpenWeatherApiRequestParameters createRequestParameterForCityIdAndMetricUnits(
       int cityId) {
     return new OpenWeatherApiRequestParameters.OpenWeatherApiRequestBuilder().withUnits(
@@ -72,24 +126,5 @@ public class OpenWeatherApiRequestUrlsTest {
       String cityName) {
     return new OpenWeatherApiRequestParameters.OpenWeatherApiRequestBuilder().withCityName(cityName)
         .build();
-  }
-
-  @Test public void testCurrentUri() {
-    givenRequestParameters(mOpenWeatherApiRequestParameters);
-    whenGetUrl();
-    thenUrlShouldBeExpected();
-  }
-
-  private void thenUrlShouldBeExpected() {
-    assertEquals(mExpectedUrl, mUrl);
-  }
-
-  private void whenGetUrl() {
-    mUrl = mOpenWeatherApiRequest.url();
-  }
-
-  private void givenRequestParameters(
-      OpenWeatherApiRequestParameters mOpenWeatherApiRequestParameters) {
-    mOpenWeatherApiRequest.addRequestParameters(mOpenWeatherApiRequestParameters);
   }
 }
